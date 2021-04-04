@@ -1,5 +1,8 @@
 import curses
+import curses.ascii
 import settings.strings as s
+import datetime as dt
+# import libs.async_program
 
 M_BLOCK_WIDTH = 22
 
@@ -7,8 +10,10 @@ M_BLOCK_WIDTH = 22
 class Terminal:
     def __init__(self):
         self.screen = curses.initscr()
+        self.screen.keypad(True)
         curses.noecho()
-        self.screen.nodelay(True)
+        curses.curs_set(0)
+        curses.halfdelay(1)
         self.__init_colors()
 
     @staticmethod
@@ -16,124 +21,89 @@ class Terminal:
         curses.start_color()
         curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
+        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
     def __get_size(self):
         return self.screen.getmaxyx()
 
     def __create_block(self, h, l, y, x):
         win = curses.newwin(h, l, y, x)
-        # win.clear()
         win.border()
         return win
 
-    def __display_menu(self, selected_row, menu_items):
-        height, width = self.__get_size()
-        menu_block = self.__create_block(width // 2 - len(s.M_ITEM1) // 2, height // 2 - 6, M_BLOCK_WIDTH, 9)
-        menu_block.keypad(True)
-        menu_block.refresh()
-        for index, row in enumerate(menu_items):
-            # x = width//2 - len(row)//2
-            # y = height//2 - len(menu_items)//2 + index
-            if index == selected_row:
-                menu_block.attron(curses.color_pair(2))
-                menu_block.addstr(index + 1, 3, row)
-                menu_block.attroff(curses.color_pair(1))
-            else:
-                menu_block.addstr(index + 1, 3, row)
+    def __init_top_bar(self, width):
+        status_bar_str = 'Press: "Enter" to start | "ESC" to stop | "Tab" to exit |'
+        self.screen.attron(curses.color_pair(2))
+        self.screen.addstr(0, 0, status_bar_str)
+        self.screen.addstr(0, len(status_bar_str), " " * (width - len(status_bar_str) - 1))
+        self.screen.attroff(curses.color_pair(2))
 
-        menu_block.refresh()
+    # def __display_menu(self, selected_row, menu_items):
+    #     height, width = self.__get_size()
+    #     menu_block = self.__create_block(width // 2 - len(s.M_ITEM1) // 2, height // 2 - 6, M_BLOCK_WIDTH, 9)
+    #     menu_block.keypad(True)
+    #     menu_block.refresh()
+    #     for index, row in enumerate(menu_items):
+    #         # x = width//2 - len(row)//2
+    #         # y = height//2 - len(menu_items)//2 + index
+    #         if index == selected_row:
+    #             menu_block.attron(curses.color_pair(2))
+    #             menu_block.addstr(index + 1, 3, row)
+    #             menu_block.attroff(curses.color_pair(1))
+    #         else:
+    #             menu_block.addstr(index + 1, 3, row)
+    #
+    #     menu_block.refresh()
 
     def __init_data_recording_page(self):
         try:
             key = 0
-            self.screen.refresh()
-            while 1:
+            while key != ord('q'):
+                key = self.screen.getch()
+
                 h, w = self.__get_size()
 
-                self.screen.refresh()
-
-                win1 = self.__create_block(h - 20, w // 2 - 10, 5, 5)
-                win2 = self.__create_block(h - 10, w // 2 - 10, 5, 5 + w // 2)
+                # Init blocks
+                win1 = self.__create_block(h - 15, w // 2 - 10, 5, 5)
+                win2 = self.__create_block(h - 15, w // 2 - 10, 5, 5 + w // 2)
                 win3 = self.__create_block(5, w - 10, h - 5, 5)
-                win1.refresh()
-                win2.refresh()
-                win3.refresh()
 
-                key = self.screen.getch()
-                if key == ord('q'):
-                    self.__close_terminal()
+                # Headers
+                block_center = (w // 2 - 20) // 2
+                win1.addstr(0, block_center, 'Devices')
+                win2.addstr(0, block_center, 'Data')
+                win3.addstr(0, 5, 'Input')
 
-                win1.clear()
-                win2.clear()
-                win3.clear()
+                block_list = [win1, win2, win3]
+
+                self.__init_top_bar(w)
+
+                win1.addstr(5, 5, str(dt.datetime.now()), curses.color_pair(3))
+
+                if key == curses.KEY_UP:
+                    win2.addstr(5, 5, chr(key))
+                else:
+                    win3.addstr(1, 1, 'Waiting')
+
+                for i in range(len(block_list)):
+                    block_list[i].refresh()
+
                 self.screen.refresh()
+
         except Exception:
+            self.__close_terminal()
+        finally:
             self.__close_terminal()
 
     def __close_terminal(self):
-        curses.nocbreak()
+        self.screen.clear()
         self.screen.keypad(False)
+        curses.nocbreak()
+        curses.curs_set(1)
         curses.echo()
         curses.endwin()
 
-    # def __init_menu_page(self):
-    #
-    #     h, w = self.__get_size()
-    #
-    #
-    #     # current_row = 0
-    #     # key = 0
-    #     # menu = [s.M_ITEM1, s.M_ITEM2, s.M_ITEM3]
-    #     # self.__display_menu(current_row, menu)
-    #     # while 1:
-    #     #     key = self.screen.getch()
-    #     #     height, width = self.__get_size()
-    #     #     # Header block
-    #     #     header_block = self.__create_block(width // 2 - (len(s.M_HEADER) + 2) // 2, height // 2 - 10, M_BLOCK_WIDTH, 3)
-    #     #     header_block.addstr(1, 5, s.M_HEADER, curses.color_pair(1))
-    #     #
-    #     #     menu_block = self.__create_block(width // 2 - len(s.M_ITEM1) // 2, height // 2 - 6, M_BLOCK_WIDTH, 9)
-    #     #     menu_block.keypad(True)
-    #     #     menu_block.refresh()
-    #     #     for index, row in enumerate(menu):
-    #     #         # x = width//2 - len(row)//2
-    #     #         # y = height//2 - len(menu_items)//2 + index
-    #     #         if index == current_row:
-    #     #             menu_block.attron(curses.color_pair(2))
-    #     #             menu_block.addstr(index + 1, 3, row)
-    #     #             menu_block.attroff(curses.color_pair(1))
-    #     #         else:
-    #     #             menu_block.addstr(index + 1, 3, row)
-    #     #
-    #     #     menu_block.refresh()
-    #     #
-    #     #     if key == curses.KEY_UP and current_row > 0:
-    #     #         current_row -= 1
-    #     #     elif key == curses.KEY_DOWN and current_row < len(menu) - 1:
-    #     #         current_row += 1
-    #     #
-    #     #     # self.__display_menu(current_row, menu)
-    #     #
-    #     #     # menu_block.addstr(1, 3, s.M_ITEM1, curses.color_pair(1))
-    #     #     # menu_block.addstr(4, 3, s.M_ITEM2, curses.color_pair(1))
-    #     #     # menu_block.addstr(7, 3, s.M_ITEM3, curses.color_pair(1))
-    #     #     #
-    #     #     # self.screen.addstr(0, 0, f'hb{width // 2 - (len(s.M_HEADER) + 2) // 2};mb{width//2 - len(s.M_ITEM1)//2}')
-    #     #
-    #     #     header_block.refresh()
-    #     #     menu_block.refresh()
-    #     #     self.screen.refresh()
-    #
-    #
-    #
-    #
-    #     # curses.nocbreak()
-    #     # self.screen.keypad(False)
-    #     # curses.echo()
-    #     # curses.endwin()
-
     def run(self):
-        curses.curs_set(0)
         self.__init_data_recording_page()
 
 
