@@ -55,13 +55,13 @@ def draw_menu(stdscr):
         start_y = int((height // 2) - 2)
 
         # Rendering some text
-        whstr = "Width: {}, Height: {}".format(width, height)
-        stdscr.addstr(0, 0, whstr, curses.color_pair(1))
+        # whstr = "Width: {}, Height: {}".format(width, height)
+        # stdscr.addstr(0, 0, whstr, curses.color_pair(1))
 
         # Render status bar
         stdscr.attron(curses.color_pair(3))
-        stdscr.addstr(height-1, 0, statusbarstr)
-        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.addstr(0, 0, statusbarstr)
+        stdscr.addstr(0, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
         stdscr.attroff(curses.color_pair(3))
 
         # Turning on attributes for title
