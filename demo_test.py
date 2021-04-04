@@ -3,6 +3,7 @@ import curses
 
 
 def draw_menu(stdscr):
+    curses.curs_set(0)
     k = 0
     cursor_x = 0
     cursor_y = 0

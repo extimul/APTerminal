@@ -42,6 +42,8 @@ def run():
     wNextP.border()
     wStats.border()
 
+    wScore.addstr('HI', crs.color_pair(1))
+
     wTitle.refresh()
     wScore.refresh()
     wCntrl.refresh()
