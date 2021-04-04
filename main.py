@@ -8,6 +8,7 @@ class Terminal:
     def __init__(self):
         self.screen = curses.initscr()
         curses.noecho()
+        self.screen.nodelay(True)
         self.__init_colors()
 
     @staticmethod
@@ -19,10 +20,11 @@ class Terminal:
     def __get_size(self):
         return self.screen.getmaxyx()
 
-    def __create_block(self, x, y, text_len, text_row_count, title=''):
-        box = curses.newwin(text_row_count, text_len, y, x - 5)
-        box.border()
-        return box
+    def __create_block(self, h, l, y, x):
+        win = curses.newwin(h, l, y, x)
+        # win.clear()
+        win.border()
+        return win
 
     def __display_menu(self, selected_row, menu_items):
         height, width = self.__get_size()
@@ -42,7 +44,37 @@ class Terminal:
         menu_block.refresh()
 
     def __init_data_recording_page(self):
+        try:
+            key = 0
+            self.screen.refresh()
+            while 1:
+                h, w = self.__get_size()
 
+                self.screen.refresh()
+
+                win1 = self.__create_block(h - 20, w // 2 - 10, 5, 5)
+                win2 = self.__create_block(h - 10, w // 2 - 10, 5, 5 + w // 2)
+                win3 = self.__create_block(5, w - 10, h - 5, 5)
+                win1.refresh()
+                win2.refresh()
+                win3.refresh()
+
+                key = self.screen.getch()
+                if key == ord('q'):
+                    self.__close_terminal()
+
+                win1.clear()
+                win2.clear()
+                win3.clear()
+                self.screen.refresh()
+        except Exception:
+            self.__close_terminal()
+
+    def __close_terminal(self):
+        curses.nocbreak()
+        self.screen.keypad(False)
+        curses.echo()
+        curses.endwin()
 
     # def __init_menu_page(self):
     #
@@ -102,7 +134,7 @@ class Terminal:
 
     def run(self):
         curses.curs_set(0)
-        self.__init_menu_page()
+        self.__init_data_recording_page()
 
 
 if __name__ == '__main__':
